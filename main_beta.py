@@ -2,10 +2,18 @@ from urllib import request
 from bs4 import BeautifulSoup
 import re
 import geocoder
+import json
+import pickle
 
 PRICE = 'object-price-value'
 PRICE_M2 = 'object-m2-price'
 ADDRESS = 'object-title-a'
+BASE_URL = 'https://www.kv.ee/?act=search.simple&deal_type=1&search_type=new&parish=1061'
+PAGE_SIZE = 100
+
+result = []
+sub_result
+prices = []
 
 def getPrice(tag, type):
 	res = tag.find(class_=type)
@@ -28,53 +36,70 @@ def getLocation(address):
 	raw_address = geocoder.yandex(address)
 	location = raw_address.latlng
 	return location
-result = []
-for page_number in range(1, 3):
-	## lets extract make_url function into a simple file and import it from there
-	## Ok, one question: if previous file was only for counting pages
-	## and this file if for creating  database
-	## where is the main file?
-	## I also have an idea to add to the database all realestates in the country
 
-	## .. *just thinking about modular structure" ..
-	## main.py (high-level-abstraction, calls functions, minimal bloat.)
-	## url_builder.py
-	## extract_page_count.py
-	## page_parser.py
-	## persistance_layer.py (database related stuff)
-	## dublicate_resolver.py
-	## convert_data_for_googleMaps.py
+def value_with_quotes(figure):
+    quoted_value = "'%s'" % figure
+    return quoted_value
 
-	## googleHeatMap init <<< ? = something, which we shold init to show heatmap
+def make_url(base_url, page_size, page):
+    return base_url + '&page_size=%d&page=%d' % (page_size, page)
 
-	## we are going to need hmm.. API?
-	## idea is that when you want to render a google map, you are doing it in a browser
-	## thus you need to run google maps in JavaScript and FETCH data from the server
+def count_pages(page):
+	raw_html = page.read()
+	soup = BeautifulSoup(raw_html, 'html.parser')
+	tag = soup.select('.jump-pagination-list > li:nth-of-type(3)')[0]
+	return tag.text
 
-	## (that's how I did it, hmmm I wonder if you could do it in python only
-	## I saw a video, where peoples used matplotlib to draw circles on map
+def value_with_quotes(figure):
+    quoted_value = "'%s'" % figure
+    return quoted_value
 
-	## Link: https://www.youtube.com/watch?v=P60qokxPPZc&t=609s
-	## googlemaps package is only for data/responses API. NOT rendering maps.
-	## this is the main project idea to prove, that python can do everything
-	## https://github.com/rochacbruno/Flask-GoogleMaps <<
-	## basically, python code will INJECT javascript into HTML, it won't run on the web
-	## although people have been talking about the possibility to run websites not only on
-	## HTML CSS JS , but HTML CSS Python or smth, http://www.brython.info/
-	## https://github.com/PythonJS/PythonJS
+content = request.urlopen(make_url(BASE_URL, PAGE_SIZE, 1))
+last_page_number = count_pages(content)
+print(last_page_number)
 
-	url = 'https://www.kv.ee/?act=search.simple&last_deal_type=1&page='+str(page_number)+'&orderby=ob&page_size=100&deal_type=1&dt_select=1&county=1&search_type=new&parish=1061'
-	print(url)
-	content = request.urlopen(url)
+
+for page_number in range(1, 2):
+
+	content = request.urlopen(make_url(BASE_URL, PAGE_SIZE, page_number))
 	raw_html = content.read()
 	soup = BeautifulSoup(raw_html, 'html.parser')
-
 	objects = soup.find_all("tr", class_='object-item')
 	for object in objects:
 		price_m2 = getPrice(object, PRICE_M2)
-		price = getPrice(object, PRICE)
+		#price = getPrice(object, PRICE)
 		address = getAddress(object)
 		location = getLocation(address)
-		result.append({'price':price, 'price_m2':price_m2, 'address':address,'location':location})
-print(len(result))
+		if location is not None:
+			latitude = location[0]
+			longitude = location[1]
+			prices.append(price_m2)
+			sub_result.append([price_m2, latitude,longitude])
+		else:
+			print(address,'in not in register yet')
+
+##searching max price in order to calculate weight of the place:
+max_price = max(prices)
+price_measure_unit = int(max_price/25)
+
+for element in sub_result:
+	weight = element[0]/price_measure_unit
+	lat = element[1]
+	lng = element[2]
+	result.append({'latitude':lat,'longitude':lng,'weight':weight})
+
+## we can probably skip zip
+#example of dict in result array
+# i dont't know
+## lets find out! 
+#{
+#  "latitude": "41.545400",
+#  "longitude": "-88.129900",
+#  "weight": 2,
+#  "zip": "60435-6907"
+#},
+
+##1 min weitgh value and 25 is max weight value
+##SO, we need to conver price_m2 to weight
+##
 ## returns an array of objects [ {coords, address, price, pricem2} ]
