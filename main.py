@@ -2,8 +2,6 @@ from urllib import request
 from bs4 import BeautifulSoup
 import re
 import geocoder
-import time
-u = time.time()
 
 PRICE = 'object-price-value'
 PRICE_M2 = 'object-m2-price'
@@ -43,8 +41,3 @@ for object in objects:
 	address = getAddress(object)
 	location = getLocation(address)
 	result.append({'price':price, 'price_m2':price_m2, 'address':address,'location':location})
-#print(result)
-u2 = time.time()
-kek = u2 - u
-print(kek)
-## returns an array of objects [ {coords, address, price, pricem2} ]
