@@ -8,12 +8,26 @@
 from bs4 import BeautifulSoup
 from urllib import request
 
-url = 'https://www.kv.ee/?act=search.simple&last_deal_type=1&page=2&orderby=ob&page_size=100&deal_type=1&dt_select=1&county=1&search_type=new&parish=1061'
-content = request.urlopen(url)
-raw_html = content.read()
-soup = BeautifulSoup(raw_html, 'html.parser')
-tag = soup.select('.jump-pagination-list > li:nth-of-type(3)')[0]
-print(tag.text)
+BASE_URL = 'https://www.kv.ee/?act=search.simple&deal_type=1&search_type=new&parish=1061'
+PAGE_SIZE = 1000
+
+def make_url(base_url, page_size, page):
+    return base_url + '&page_size=%d&page=%d' % (page_size, page)
+
+## https://www.kv.ee/?act=search.simple&page=1&page_size=1000&deal_type=1&
+def count_pages(page):
+	raw_html = page.read()
+	soup = BeautifulSoup(raw_html, 'html.parser')
+	tag = soup.select('.jump-pagination-list > li:nth-of-type(3)')[0]
+	return tag.text
+
+content = request.urlopen(make_url(BASE_URL, PAGE_SIZE, 1))
+x = count_pages(content)
+print(x)
+#raw_html = content.read()
+#soup = BeautifulSoup(raw_html, 'html.parser')
+#tag = soup.select('.jump-pagination-list > li:nth-of-type(3)')[0]
+#print(tag.text)
 ## 'Only the following pseudo-classes are implemented: nth-of-type.
 ##.jump-pagination-list > li:nth-last-child(2)
 ## working fine
