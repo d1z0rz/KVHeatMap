@@ -2,7 +2,6 @@ from urllib import request
 from bs4 import BeautifulSoup
 import re
 import geocoder
-import json
 import pickle
 
 PRICE = 'object-price-value'
@@ -12,7 +11,7 @@ BASE_URL = 'https://www.kv.ee/?act=search.simple&deal_type=1&search_type=new&par
 PAGE_SIZE = 100
 
 result = []
-sub_result
+sub_result = []
 prices = []
 
 def getPrice(tag, type):
@@ -54,6 +53,14 @@ def value_with_quotes(figure):
     quoted_value = "'%s'" % figure
     return quoted_value
 
+def write_list_to_file(guest_list, filename):
+    #"""Write the list to csv file."""
+
+    with open(filename, "w") as outfile:
+        for entries in guest_list:
+            outfile.write(entries)
+            outfile.write("\n")
+
 content = request.urlopen(make_url(BASE_URL, PAGE_SIZE, 1))
 last_page_number = count_pages(content)
 print(last_page_number)
@@ -82,22 +89,16 @@ for page_number in range(1, 2):
 max_price = max(prices)
 price_measure_unit = int(max_price/25)
 
-for element in sub_result:
-	weight = element[0]/price_measure_unit
-	lat = element[1]
-	lng = element[2]
-	result.append({'latitude':lat,'longitude':lng,'weight':weight})
+data_file = open('data.txt', 'w')
 
-## we can probably skip zip
-#example of dict in result array
-# i dont't know
-## lets find out! 
-#{
-#  "latitude": "41.545400",
-#  "longitude": "-88.129900",
-#  "weight": 2,
-#  "zip": "60435-6907"
-#},
+for element in sub_result:
+	weight = int(element[0]/price_measure_unit)
+	lat = (element[1])
+	lng = (element[2])
+	#values_data = str([lat,lng,weight])
+	data_file.write(str(lat)+','+str(lng)+','+str(weight)+'\n')
+	#result.append([lat,lng,weight])
+data_file.close()
 
 ##1 min weitgh value and 25 is max weight value
 ##SO, we need to conver price_m2 to weight
