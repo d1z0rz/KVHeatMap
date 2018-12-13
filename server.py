@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
-from sqlalchemy import create_engine
 from json import dumps
 from tinydb import TinyDB, Query
 
@@ -36,17 +35,6 @@ class Heatmap_Data(Resource):
         return jsonify(response)
 
 
-
-#class Departmental_Salary(Resource):
-#    def get(self, department_name):
-#        conn = e.connect()
-#        query = conn.execute("select * from salaries where Department='%s'"%department_name.upper())
-#        #Query the result and get cursor.Dumping that data to a JSON is looked by extension
-#        result = {'data': [dict(zip(tuple (query.keys()) ,i)) for i in query.cursor]}
-#        return result
-#        #We can have PUT,DELETE,POST here. But in our API GET implementation is sufficient
-
-#api.add_resource(Departmental_Salary, '/dept/<string:department_name>')
 api.add_resource(Heatmap_Data, '/test')
 
 if __name__ == '__main__':

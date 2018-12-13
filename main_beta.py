@@ -5,20 +5,14 @@ import geocoder
 import pickle
 from tinydb import TinyDB
 
-	##searching max price in order to calculate weight of the place:
-	# max_price = max(prices)
-	# price_measure_unit = int(max_price/25)
-
 PRICE = 'object-price-value'
 PRICE_M2 = 'object-m2-price'
 ADDRESS = 'object-title-a'
 BASE_URL = 'https://www.kv.ee/?act=search.simple&deal_type=1&search_type=new'
-PAGE_SIZE = 1000
+PAGE_SIZE = 100
 PARISHES = { "tallinn":1061, "parnu":1045, "tartu":1063, 'narva':1036 }
-db = TinyDB('data.json')
 
-def main():
-	scrape_parish('tallinn')
+db = TinyDB('data.json')
 
 def scrape_parish(name):
 	parish = PARISHES[name]
@@ -26,7 +20,7 @@ def scrape_parish(name):
 		raise ValueError('Parish "%s" not found' % (parish))
 	url = make_url(BASE_URL, PAGE_SIZE, 1, parish)
 	last_page_number = count_pages(url)
-	for page_number in range(1): ## TODO
+	for page_number in range(last_page_number): ## TODO
 		url = make_url(BASE_URL, PAGE_SIZE, page_number, parish)
 		estate_objects = parse_page(url)
 		save_to_db(estate_objects, parish)
@@ -94,7 +88,4 @@ def count_pages(url):
 	raw_html = content.read()
 	soup = BeautifulSoup(raw_html, 'html.parser')
 	tag = soup.select('.jump-pagination-list > li:nth-of-type(3)')[0]
-	return tag.text
-
-if (__name__ == "__main__"):
-	main()
+	return int(tag.text)

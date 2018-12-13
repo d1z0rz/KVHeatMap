@@ -1,43 +1,28 @@
-from urllib import request
-from bs4 import BeautifulSoup
-import re
-import geocoder
+from tkinter import *
+from tkinter.ttk import *
+from main_beta import scrape_parish
+from page_parsing import estimated_time
 
-PRICE = 'object-price-value'
-PRICE_M2 = 'object-m2-price'
-ADDRESS = 'object-title-a'
+window = Tk()
+window.title("City chooser")
+selected = IntVar()
+parish = {1:"tallinn", 2:"tartu", 3:"narva",4:"parnu"}
 
-def getPrice(tag, type):
-	res = tag.find(class_=type)
-	raw_text = res.text
-	return format_price(raw_text)
+lbl = Label(window, text="Estimate time:").grid(column=0, row=1)
+lbl = Label(window, text="------")
+lbl.grid(column=4, row=1)
 
-def format_price(raw_price):
-	stripped = raw_price.strip().replace(u'\xa0', '')
-	formatted = re.findall(r'\d+', stripped)
-	return int(formatted[0])
+def clicked():
+	city  = parish[selected.get()]
+	print(city)
+	time = estimated_time(city)
+	lbl.configure(text=str(time)+' seconds')
+	print(time)
+	#scrape_parish(city)
 
-def getAddress(tag):
-	res = tag.find(class_=ADDRESS)
-	raw_text = res.text
-	stripped = raw_text.strip()
-	array = stripped.split(", ")
-	return array[1] + ', ' + array[-1]
-
-def getLocation(address):
-	raw_address = geocoder.yandex(address)
-	location = raw_address.latlng
-	return location
-url = 'https://www.kv.ee/?act=search.simple&last_deal_type=1&page=2&orderby=ob&page_size=500&deal_type=1&dt_select=1&county=1&search_type=new&parish=1061'
-content = request.urlopen(url)
-raw_html = content.read()
-soup = BeautifulSoup(raw_html, 'html.parser')
-
-objects = soup.find_all("tr", class_='object-item')
-result = []
-for object in objects:
-	price_m2 = getPrice(object, PRICE_M2)
-	price = getPrice(object, PRICE)
-	address = getAddress(object)
-	location = getLocation(address)
-	result.append({'price':price, 'price_m2':price_m2, 'address':address,'location':location})
+rad1 = Radiobutton(window,text='Tallinn', value=1, variable=selected).grid(column=0, row=0)
+rad2 = Radiobutton(window,text='Tartu', value=2, variable=selected).grid(column=1, row=0)
+rad3 = Radiobutton(window,text='Narva', value=3, variable=selected).grid(column=2, row=0)
+rad4 = Radiobutton(window,text='Parnu', value=4, variable=selected).grid(column=3, row=0)
+btn = Button(window, text="Tap to download database", command=clicked).grid(column=4, row=0)
+window.mainloop()
